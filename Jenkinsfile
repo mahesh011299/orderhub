@@ -20,9 +20,8 @@ pipeline {
 
         stage('Unit Test') {
             steps {
-                echo "2. Running Unit Tests..."
-                bat "python -m pip install -r requirements.txt"
-                bat "pytest tests/"
+                echo "2. Running Unit Tests inside isolated Python container..."
+                bat "${DOCKER} run --rm -v \"%WORKSPACE%:/app\" -w /app python:3.12-slim sh -c \"pip install --no-cache-dir -r requirements.txt && pytest tests/\""
             }
         }
 
