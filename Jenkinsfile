@@ -1,7 +1,7 @@
 pipeline {
     agent any
     options {
-        // Prevent concurrent race conditions
+        // Prevent race condition from concurrent builds
         disableConcurrentBuilds()
     }
     environment {
@@ -21,7 +21,8 @@ pipeline {
         stage('Unit Test') {
             steps {
                 echo "2. Running Unit Tests inside isolated Python container..."
-                bat "${DOCKER} run --rm -v \"%WORKSPACE%:/app\" -w /app python:3.12-slim sh -c \"pip install --no-cache-dir -r requirements.txt && pytest tests/\""
+                // Added -e PYTHONPATH=. and python -m pytest to resolve the module path
+                bat "${DOCKER} run --rm -v \"%WORKSPACE%:/app\" -w /app -e PYTHONPATH=. python:3.12-slim sh -c \"pip install --no-cache-dir -r requirements.txt && python -m pytest tests/\""
             }
         }
 
@@ -40,7 +41,7 @@ pipeline {
         stage('Test Docker Image') {
             steps {
                 echo "4. Testing built Docker image artifact..."
-                bat "${DOCKER} run --rm ${IMAGE_NAME}:${IMMUTABLE_TAG} pytest tests/"
+                bat "${DOCKER} run --rm -e PYTHONPATH=. ${IMAGE_NAME}:${IMMUTABLE_TAG} python -m pytest tests/"
             }
         }
 
